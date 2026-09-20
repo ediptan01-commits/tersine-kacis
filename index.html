@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Tersine Kaçış</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    -webkit-tap-highlight-color:transparent;
+}
+
+body{
+    background:#050711;
+    color:white;
+    font-family:Arial,sans-serif;
+    overflow:hidden;
+    touch-action:none;
+}
+
+#app{
+    width:100vw;
+    height:100vh;
+    position:relative;
+    overflow:hidden;
+    background:
+      radial-gradient(circle at 50% 35%,#18234a 0,#080b18 42%,#03040a 100%);
+}
+
+.screen{
+    position:absolute;
+    inset:0;
+    display:none;
+}
+
+.screen.active{
+    display:flex;
+}
+
+/* ANA MENÜ */
+
+#menu{
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    padding:25px;
+}
+
+.logo{
+    text-align:center;
+    margin-bottom:45px;
+}
+
+.logo small{
+    display:block;
+    color:#6ee7ff;
+    letter-spacing:5px;
+    font-size:12px;
+    margin-bottom:8px;
+}
+
+.logo h1{
+    font-size:42px;
+    letter-spacing:-2px;
+    text-shadow:0 0 25px #00d9ff;
+}
+
+.logo p{
+    color:#8791ad;
+    margin-top:8px;
+}
+
+.menu-buttons{
+    width:min(330px,90%);
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
+button{
+    border:0;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.main-btn{
+    height:58px;
+    border-radius:17px;
+    font-size:17px;
+    background:linear-gradient(135deg,#13d9ff,#6a4cff);
+    box-shadow:0 10px 30px #005cff44;
+}
+
+.secondary-btn{
+    height:50px;
+    border-radius:15px;
+    background:#12182b;
+    border:1px solid #293352;
+}
+
+/* OYUN */
+
+#game{
+    flex-direction:column;
+}
+
+#gameCanvas{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+}
+
+.hud{
+    position:absolute;
+    top:15px;
+    left:15px;
+    right:15px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    pointer-events:none;
+}
+
+.stat{
+    background:#090d1dcc;
+    border:1px solid #273250;
+    backdrop-filter:blur(10px);
+    padding:8px 12px;
+    border-radius:12px;
+    min-width:75px;
+}
+
+.stat span{
+    display:block;
+    font-size:10px;
+    color:#76819f;
+}
+
+.stat strong{
+    font-size:18px;
+}
+
+.energy{
+    width:100px;
+    height:7px;
+    background:#20273a;
+    border-radius:10px;
+    overflow:hidden;
+    margin-top:5px;
+}
+
+.energy div{
+    height:100%;
+    width:100%;
+    background:#35e6ff;
+    transition:.2s;
+}
+
+.centerInfo{
+    position:absolute;
+    top:85px;
+    left:50%;
+    transform:translateX(-50%);
+    text-align:center;
+    pointer-events:none;
+}
+
+#warning{
+    color:#ff547d;
+    font-size:13px;
+    font-weight:bold;
+    opacity:0;
+    transition:.3s;
+}
+
+#combo{
+    color:#ffe66d;
+    font-size:20px;
+    font-weight:bold;
+    margin-top:6px;
+}
+
+#tapHint{
+    position:absolute;
+    bottom:30px;
+    left:50%;
+    transform:translateX(-50%);
+    color:#65708d;
+    font-size:12px;
+    pointer-events:none;
+}
+
+/* KARAKTER */
+
+#characters{
+    padding:25px;
+    flex-direction:column;
+}
+
+.back{
+    width:48px;
+    height:48px;
+    border-radius:14px;
+    background:#12182b;
+    margin-bottom:25px;
+}
+
+.title{
+    font-size:28px;
+    margin-bottom:20px;
+}
+
+.character-list{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:12px;
+    width:100%;
+    max-width:430px;
+    margin:auto;
+}
+
+.character{
+    background:#0d1221;
+    border:1px solid #26304a;
+    border-radius:20px;
+    padding:22px 10px;
+    text-align:center;
+}
+
+.character.selected{
+    border-color:#36dfff;
+    box-shadow:0 0 20px #00d9ff33;
+}
+
+.avatar{
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    margin:auto auto 12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:30px;
+    background:linear-gradient(135deg,#19dfff,#694dff);
+}
+
+.character:nth-child(2) .avatar{
+    background:linear-gradient(135deg,#ff4f8b,#ff9d42);
+}
+
+.character:nth-child(3) .avatar{
+    background:linear-gradient(135deg,#55efc4,#0984e3);
+}
+
+.character:nth-child(4) .avatar{
+    background:linear-gradient(135deg,#ffe66d,#ff7b54);
+}
+
+.character small{
+    color:#7e89a6;
+}
+
+/* OYUN SONU */
+
+#gameOver{
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    background:#03040ae8;
+    backdrop-filter:blur(12px);
+    text-align:center;
+    padding:25px;
+}
+
+#gameOver h2{
+    font-size:38px;
+    margin-bottom:10px;
+}
+
+.finalScore{
+    color:#6ee7ff;
+    font-size:42px;
+    font-weight:bold;
+    margin:15px 0 25px;
+}
+
+.gameover-buttons{
+    width:280px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="app">
+
+    <!-- ANA MENÜ -->
+    <section id="menu" class="screen active">
+
+        <div class="logo">
+            <small>EDIPTAN STUDIOS</small>
+            <h1>TERSİNE<br>KAÇIŞ</h1>
+            <p>Kuralları tersine çevir.</p>
+        </div>
+
+        <div class="menu-buttons">
+            <button class="main-btn" onclick="startGame()">OYNA</button>
+            <button class="secondary-btn" onclick="showScreen('characters')">
+                KARAKTERLER
+            </button>
+        </div>
+
+    </section>
+
+
+    <!-- OYUN -->
+    <section id="game" class="screen">
+
+        <canvas id="gameCanvas"></canvas>
+
+        <div class="hud">
+
+            <div class="stat">
+                <span>SKOR</span>
+                <strong id="score">0</strong>
+            </div>
+
+            <div class="stat">
+                <span>ENERJİ</span>
+                <div class="energy">
+                    <div id="energyBar"></div>
+                </div>
+            </div>
+
+            <div class="stat">
+                <span>REKOR</span>
+                <strong id="best">0</strong>
+            </div>
+
+        </div>
+
+        <div class="centerInfo">
+            <div id="warning">DİKKAT!</div>
+            <div id="combo"></div>
+        </div>
+
+        <div id="tapHint">
+            EKRANA DOKUN • YERÇEKİMİNİ DEĞİŞTİR
+        </div>
+
+    </section>
+
+
+    <!-- KARAKTERLER -->
+    <section id="characters" class="screen">
+
+        <button class="back" onclick="showScreen('menu')">←</button>
+
+        <h2 class="title">Karakterler</h2>
+
+        <div class="character-list">
+
+            <div class="character selected"
+                 onclick="selectCharacter(0,this)">
+                <div class="avatar">●</div>
+                <b>NOVA</b>
+                <small>Standart</small>
+            </div>
+
+            <div class="character"
+                 onclick="selectCharacter(1,this)">
+                <div class="avatar">◆</div>
+                <b>FLARE</b>
+                <small>Hızlı</small>
+            </div>
+
+            <div class="character"
+                 onclick="selectCharacter(2,this)">
+                <div class="avatar">▲</div>
+                <b>WAVE</b>
+                <small>Dengeli</small>
+            </div>
+
+            <div class="character"
+                 onclick="selectCharacter(3,this)">
+                <div class="avatar">★</div>
+                <b>VOLT</b>
+                <small>Güçlü</small>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- OYUN SONU -->
+    <section id="gameOver" class="screen">
+
+        <h2>OYUN BİTTİ</h2>
+
+        <p>Skorun</p>
+
+        <div class="finalScore" id="finalScore">0</div>
+
+        <div class="gameover-buttons">
+            <button class="main-btn" onclick="startGame()">TEKRAR OYNA</button>
+            <button class="secondary-btn" onclick="showScreen('menu')">
+                ANA MENÜ
+            </button>
+        </div>
+
+    </section>
+
+</div>
+
+
+<script>
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+let W = 0;
+let H = 0;
+
+function resize(){
+
+    W = canvas.width = window.innerWidth * devicePixelRatio;
+    H = canvas.height = window.innerHeight * devicePixelRatio;
+
+    ctx.setTransform(
+        devicePixelRatio,
+        0,
+        0,
+        devicePixelRatio,
+        0,
+        0
+    );
+
+    W = window.innerWidth;
+    H = window.innerHeight;
+}
+
+window.addEventListener("resize",resize);
+resize();
+
+
+let gameRunning = false;
+let gravity = 1;
+
+let player = {
+    x:120,
+    y:300,
+    size:24,
+    vy:0
+};
+
+let obstacles = [];
+let particles = [];
+
+let score = 0;
+let best = Number(localStorage.getItem("tersine_best") || 0);
+let energy = 100;
+let combo = 0;
+
+let speed = 4;
+let spawnTimer = 0;
+let lastTime = 0;
+
+document.getElementById("best").textContent = best;
+
+
+/* EKRAN */
+
+function showScreen(id){
+
+    document.querySelectorAll(".screen").forEach(s=>{
+        s.classList.remove("active");
+    });
+
+    document.getElementById(id).classList.add("active");
+}
+
+
+/* OYUNU BAŞLAT */
+
+function startGame(){
+
+    showScreen("game");
+
+    score = 0;
+    energy = 100;
+    combo = 0;
+
+    speed = 4;
+
+    gravity = 1;
+
+    obstacles = [];
+    particles = [];
+
+    player.x = W * .22;
+    player.y = H * .5;
+    player.vy = 0;
+
+    gameRunning = true;
+
+    document.getElementById("score").textContent = "0";
+    document.getElementById("combo").textContent = "";
+
+    lastTime = performance.now();
+
+    requestAnimationFrame(gameLoop);
+}
+
+
+/* DOKUNMA */
+
+document.addEventListener("pointerdown",e=>{
+
+    if(!gameRunning) return;
+
+    gravity *= -1;
+
+    player.vy = gravity * 2;
+
+    energy -= 3;
+
+    combo++;
+
+    document.getElementById("combo").textContent =
+        combo > 1 ? "COMBO x" + combo : "";
+
+    burst(
+        player.x,
+        player.y,
+        12
+    );
+
+    vibrate(20);
+
+});
+
+
+/* OYUN DÖNGÜSÜ */
+
+function gameLoop(time){
+
+    if(!gameRunning) return;
+
+    const dt = Math.min((time-lastTime)/16.67,2);
+
+    lastTime = time;
+
+    update(dt);
+    draw();
+
+    requestAnimationFrame(gameLoop);
+}
+
+
+/* GÜNCELLEME */
+
+function update(dt){
+
+    score += 0.35 * dt;
+
+    speed += 0.0015 * dt;
+
+    energy -= .018 * dt;
+
+    if(energy <= 0){
+
+        endGame();
+        return;
+    }
+
+    player.vy += gravity * .35 * dt;
+
+    player.y += player.vy * dt;
+
+    /* DUVAR SINIRI */
+
+    const top = 75;
+    const bottom = H - 45;
+
+    if(player.y < top){
+
+        player.y = top;
+        player.vy = 0;
+
+    }
+
+    if(player.y > bottom){
+
+        player.y = bottom;
+        player.vy = 0;
+
+    }
+
+
+    /* ENGELLER */
+
+    spawnTimer -= dt;
+
+    if(spawnTimer <= 0){
+
+        spawnObstacle();
+
+        spawnTimer =
+            Math.max(42,90 - score*.05);
+    }
+
+
+    obstacles.forEach(o=>{
+
+        o.x -= speed * dt;
+
+        if(!o.passed &&
+           o.x + o.w < player.x){
+
+            o.passed = true;
+
+            score += 10;
+
+            combo++;
+
+            burst(
+                o.x,
+                o.y,
+                8
+            );
+        }
+
+    });
+
+
+    obstacles =
+        obstacles.filter(o=>o.x + o.w > -50);
+
+
+    /* ÇARPIŞMA */
+
+    for(const o of obstacles){
+
+        if(
+            player.x + player.size/2 > o.x &&
+            player.x - player.size/2 < o.x + o.w &&
+            player.y + player.size/2 > o.y &&
+            player.y - player.size/2 < o.y + o.h
+        ){
+
+            endGame();
+            return;
+        }
+    }
+
+
+    /* PARÇACIKLAR */
+
+    particles.forEach(p=>{
+
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+
+        p.life -= .025 * dt;
+
+        p.vy += .04 * dt;
+
+    });
+
+    particles =
+        particles.filter(p=>p.life>0);
+
+
+    document.getElementById("score").textContent =
+        Math.floor(score);
+
+    document.getElementById("energyBar").style.width =
+        Math.max(0,energy) + "%";
+
+    if(energy < 25){
+
+        document.getElementById("warning").style.opacity = 1;
+
+    }else{
+
+        document.getElementById("warning").style.opacity = 0;
+    }
+
+}
+
+
+/* ENGEL OLUŞTUR */
+
+function spawnObstacle(){
+
+    const ceiling = Math.random() > .5;
+
+    const size = 55 + Math.random()*65;
+
+    let y;
+
+    if(ceiling){
+
+        y = 75;
+
+    }else{
+
+        y = H - 45 - size;
+    }
+
+    obstacles.push({
+
+        x:W+40,
+
+        y:y,
+
+        w:35 + Math.random()*20,
+
+        h:size,
+
+        passed:false
+
+    });
+}
+
+
+/* ÇİZİM */
+
+function draw(){
+
+    ctx.clearRect(0,0,W,H);
+
+
+    /* ARKA PLAN */
+
+    const gradient =
+        ctx.createLinearGradient(0,0,0,H);
+
+    gradient.addColorStop(0,"#080b1a");
+    gradient.addColorStop(.5,"#111936");
+    gradient.addColorStop(1,"#050711");
+
+    ctx.fillStyle = gradient;
+
+    ctx.fillRect(0,0,W,H);
+
+
+    /* GRID */
+
+    ctx.strokeStyle = "#ffffff08";
+    ctx.lineWidth = 1;
+
+    for(let x=0;x<W;x+=40){
+
+        ctx.beginPath();
+        ctx.moveTo(x,0);
+        ctx.lineTo(x,H);
+        ctx.stroke();
+    }
+
+    for(let y=0;y<H;y+=40){
+
+        ctx.beginPath();
+        ctx.moveTo(0,y);
+        ctx.lineTo(W,y);
+        ctx.stroke();
+    }
+
+
+    /* TAVAN */
+
+    ctx.fillStyle="#10182f";
+
+    ctx.fillRect(
+        0,
+        65,
+        W,
+        5
+    );
+
+
+    /* ZEMİN */
+
+    ctx.fillRect(
+        0,
+        H-40,
+        W,
+        5
+    );
+
+
+    /* ENGELLER */
+
+    obstacles.forEach(o=>{
+
+        const g =
+            ctx.createLinearGradient(
+                o.x,
+                o.y,
+                o.x+o.w,
+                o.y+o.h
+            );
+
+        g.addColorStop(0,"#ff3f7f");
+        g.addColorStop(1,"#743cff");
+
+        ctx.fillStyle = g;
+
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = "#ff3f7f";
+
+        ctx.fillRect(
+            o.x,
+            o.y,
+            o.w,
+            o.h
+        );
+
+        ctx.shadowBlur = 0;
+
+    });
+
+
+    /* KARAKTER */
+
+    ctx.save();
+
+    ctx.translate(
+        player.x,
+        player.y
+    );
+
+    ctx.rotate(
+        gravity === 1 ? 0 : Math.PI
+    );
+
+    ctx.shadowBlur = 25;
+    ctx.shadowColor = "#35e6ff";
+
+    const pg =
+        ctx.createLinearGradient(
+            -15,-15,
+            15,15
+        );
+
+    pg.addColorStop(0,"#ffffff");
+    pg.addColorStop(.5,"#35e6ff");
+    pg.addColorStop(1,"#635bff");
+
+    ctx.fillStyle = pg;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        0,
+        player.size/2,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle="#07101d";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        6,
+        -4,
+        4,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.restore();
+
+
+    /* PARÇACIKLAR */
+
+    particles.forEach(p=>{
+
+        ctx.globalAlpha = Math.max(0,p.life);
+
+        ctx.fillStyle="#5beaff";
+
+        ctx.fillRect(
+            p.x,
+            p.y,
+            3,
+            3
+        );
+
+    });
+
+    ctx.globalAlpha=1;
+}
+
+
+/* PARÇACIK */
+
+function burst(x,y,count){
+
+    for(let i=0;i<count;i++){
+
+        particles.push({
+
+            x:x,
+
+            y:y,
+
+            vx:(Math.random()-.5)*5,
+
+            vy:(Math.random()-.5)*5,
+
+            life:1
+
+        });
+
+    }
+}
+
+
+/* OYUN BİTTİ */
+
+function endGame(){
+
+    gameRunning=false;
+
+    const final =
+        Math.floor(score);
+
+    if(final > best){
+
+        best = final;
+
+        localStorage.setItem(
+            "tersine_best",
+            best
+        );
+    }
+
+    document.getElementById("finalScore")
+        .textContent = final;
+
+    document.getElementById("best")
+        .textContent = best;
+
+    vibrate([80,50,80]);
+
+    setTimeout(()=>{
+
+        showScreen("gameOver");
+
+    },250);
+}
+
+
+/* TİTREŞİM */
+
+function vibrate(pattern){
+
+    if(navigator.vibrate){
+
+        navigator.vibrate(pattern);
+    }
+}
+
+
+/* KARAKTER */
+
+function selectCharacter(index,element){
+
+    document.querySelectorAll(".character")
+        .forEach(c=>c.classList.remove("selected"));
+
+    element.classList.add("selected");
+
+    localStorage.setItem(
+        "character",
+        index
+    );
+}
+
+</script>
+
+</body>
+</html>
